@@ -1,0 +1,278 @@
+<div class="row">
+  <div class="col-12">
+    <h1>POS Devices</h1>
+    <p>Proof of concept connecting <kbd>POS</kbd> devices over <kbd>Chrome</kbd></p>
+    <hr>
+  </div>
+  <div class="col-12">
+    <p>
+      All you need is now to enable in your browser (if you are using Chrome) the
+      flags related to Serial Communication and Bluetooth devices. <a href="chrome://flags">chrome://flags</a>
+    </p>
+    <div class="alert alert-warning" *ngIf="!hasBluetooth">
+      <p>It seems your device does not have bluetooth or it is not enabled/available.</p>
+    </div>
+    <div class="alert alert-danger" *ngIf="!hasWebBluetooth">
+      <p>It seems the new permissions backend for Web Bluetooth is not enabled. Please navigate to
+        <kbd><a href="chrome://flags#enable-web-bluetooth-new-permissions-backend">chrome://flags#enable-web-bluetooth-new-permissions-backend</a></kbd></p>
+    </div>
+    <div class="alert alert-danger" *ngIf="!hasSPP">
+      <p>It seems the new permissions backend for Web Bluetooth is not enabled. Please navigate to
+        <kbd><a href="chrome://flags#enable-bluetooth-spp-in-serial-api">chrome://flags#enable-bluetooth-spp-in-serial-api</a></kbd></p>
+    </div>
+    <div class="alert alert-danger" *ngIf="!hasUSB">
+      <p>It seems the current operating system does not support USB devices communication</p>
+    </div>
+    <div class="alert alert-danger" *ngIf="!hasCOM">
+      <p>It seems the current operating system does not support COM ports communication</p>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <pre class="mb-0" *ngFor="let msg of consoleArray">{{ msg }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <h2>POS Control Panel</h2>
+    <p>Manage chrome devices</p>
+    <hr>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-3">
+    <div class="d-flex justify-content-between">
+      <div class="d-inline-block">POS Bluetooth devices</div>
+      <button class="btn btn-sm btn-primary" (click)="requestBluetoothDevice()">Add</button>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Is Connected</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let device of availableBluetoothDevices">
+        <td>{{ device.id }}</td>
+        <td>{{ device.name }}</td>
+        <td>{{ device.gatt?.connected }}</td>
+        <td>
+          <button type="button" class="btn btn-sm me-2 btn-outline-warning" (click)="useBluetoothDevice(device)">Select</button>
+          <button type="button" class="btn btn-sm me-2 btn-outline-danger" (click)="forgetBluetoothDevice(device)">Forget</button>
+        </td>
+      </tr>
+      <tr *ngIf="!availableBluetoothDevices || availableBluetoothDevices.length === 0">
+        <td colspan="4" class="font-monospace text-center">No devices paired or available</td>
+      </tr>
+      </tbody>
+      <tfoot>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Is Connected</th>
+        <th>Actions</th>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <h2>POS Selected Device</h2>
+    <p>Access current POS device functions</p>
+    <hr>
+  </div>
+
+  <div class="col-12">
+    <dl class="row">
+      <dt class="col-sm-3">Bluetooth Name</dt>
+      <dd class="col-sm-9">{{ selectedBluetoothDevice?.name || 'N/A' }}</dd>
+
+      <dt class="col-sm-3">Bluetooth ID</dt>
+      <dd class="col-sm-9">{{ selectedBluetoothDevice?.id || 'N/A' }}</dd>
+
+      <dt class="col-sm-3">Is Connected?</dt>
+      <dd class="col-sm-9">{{ selectedBluetoothDevice?.gatt?.connected || false }}</dd>
+      <dd class="col-sm-12">
+        <button *ngIf="!this.selectedBluetoothDevice?.gatt?.connected" type="button" class="btn btn-primary" (click)="toggleConnectSelectedBluetooth()">
+          <span *ngIf="!this.selectedBluetoothDeviceConnecting">Connect</span>
+          <span *ngIf="this.selectedBluetoothDeviceConnecting">Connecting <i class="spinner-border spinner-border-sm"></i></span>
+        </button>
+        <button *ngIf="this.selectedBluetoothDevice?.gatt?.connected" type="button" class="btn btn-danger" (click)="toggleConnectSelectedBluetooth()">
+          <span>Disconnect</span>
+        </button>
+      </dd>
+
+      <dt class="col-sm-3">Reader Characteristic</dt>
+      <dd class="col-sm-9">
+        <p><b>UUID:</b> {{ selectedBluetoothDeviceReaderCharacteristic?.uuid || 'N/A' }}</p>
+        <p><b>VALUE:</b> {{ selectedBluetoothDeviceReaderCharacteristic?.value || 'N/A' }}</p>
+      </dd>
+
+      <dt class="col-sm-3">Writer Characteristic</dt>
+      <dd class="col-sm-9">
+        <p><b>UUID:</b> {{ selectedBluetoothDeviceWriterCharacteristic?.uuid || 'N/A' }}</p>
+        <p><b>VALUE:</b> {{ selectedBluetoothDeviceWriterCharacteristic?.value || 'N/A' }}</p>
+      </dd>
+    </dl>
+  </div>
+
+  <div class="col-12">
+    <table class="table table-bordered">
+      <tbody>
+      <tr>
+        <td class="w-25"><button type="button" class="btn w-100 btn-sm btn-primary" (click)="sampleBluetoothDevicePrint()">Print Sample</button></td>
+        <td class="w-25"></td>
+        <td class="w-25"></td>
+        <td class="w-25"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-3">
+    <div class="d-flex justify-content-between">
+      <div class="d-inline-block">COM Ports</div>
+      <button class="btn btn-sm btn-primary" (click)="requestCOMPort()">Add</button>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        <th>Vendor ID</th>
+        <th>Manufacturer Name</th>
+        <th>Serial Number</th>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let port of availableSerialPorts">
+        <td>{{ port.getInfo().usbVendorId }}</td>
+        <td>{{ port.getInfo().usbProductId }}</td>
+        <td>{{ port.getInfo().locationId }}</td>
+        <td>{{ port.getInfo().vendor }}</td>
+        <td>{{ port.getInfo().manufacturer }}</td>
+        <td>
+          <button type="button" class="btn btn-sm me-2 btn-outline-warning" (click)="connectCOMPort(port)" >Select</button>
+          <button type="button" class="btn btn-sm me-2 btn-outline-danger" (click)="forgetCOMPort(port)">Forget</button>
+        </td>
+      </tr>
+      <tr *ngIf="!availableSerialPorts || availableSerialPorts.length === 0">
+        <td colspan="6" class="font-monospace text-center">No COM ports available</td>
+      </tr>
+      </tbody>
+      <tfoot>
+      <tr>
+        <th>Vendor ID</th>
+        <th>Manufacturer Name</th>
+        <th>Serial Number</th>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Actions</th>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <h2>POS Selected COM</h2>
+    <p>Access current POS device functions over COM</p>
+    <hr>
+  </div>
+
+  <div class="col-12">
+    <dl class="row">
+      <dt class="col-sm-3">Product ID</dt>
+      <dd class="col-sm-9">{{ selectedCOMPort?.getInfo()?.productId || 'N/A' }}</dd>
+
+      <dt class="col-sm-3">Vendor ID</dt>
+      <dd class="col-sm-9">{{ selectedCOMPort?.getInfo()?.vendorId || 'N/A' }}</dd>
+    </dl>
+  </div>
+
+  <div class="col-12">
+    <table class="table table-bordered">
+      <tbody>
+      <tr>
+        <td class="w-25"><button type="button" class="btn w-100 btn-sm btn-primary" (click)="sampleCOMPortPrint()">Print Sample</button></td>
+        <td class="w-25"></td>
+        <td class="w-25"></td>
+        <td class="w-25"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-3">
+    <div class="d-flex justify-content-between">
+      <div class="d-inline-block">POS USB devices</div>
+      <button class="btn btn-sm btn-primary" (click)="requestUsbDevice()">Add</button>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        <th>Vendor ID</th>
+        <th>Manufacturer Name</th>
+        <th>Serial Number</th>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let device of availableUSBDevices">
+        <td>{{ device.vendorId }}</td>
+        <td>{{ device.manufacturerName }}</td>
+        <td>{{ device.serialNumber }}</td>
+        <td>{{ device.productId }}</td>
+        <td>{{ device.productName }}</td>
+        <td>
+          <button type="button" class="btn btn-sm me-2 btn-outline-warning">Select</button>
+          <button type="button" class="btn btn-sm me-2 btn-outline-danger" (click)="forgetUSBDevice(device)">Forget</button>
+        </td>
+      </tr>
+      <tr *ngIf="!availableUSBDevices || availableUSBDevices.length === 0">
+        <td colspan="6" class="font-monospace text-center">No usb devices available</td>
+      </tr>
+      </tbody>
+      <tfoot>
+      <tr>
+        <th>Vendor ID</th>
+        <th>Manufacturer Name</th>
+        <th>Serial Number</th>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Actions</th>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

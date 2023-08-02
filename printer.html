@@ -1,0 +1,114 @@
+<html>
+<body>
+<textarea id="printContent"></textarea>
+<input type="submit" onclick="connectAndPrint()" value="Print"/>
+<P>Type text into box and click on submit button.
+    <script>
+        var device;
+
+        function setup(device) {
+            // debugger;
+            device.gatt.connect()
+                .then(res => {
+                    console.log(res);
+
+                    res.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb').then(_res => {
+                        console.log(_res);
+
+                        _res.getCharacteristics().then(__res => {
+                            console.log(__res);
+                        })
+                    });
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+
+            // return device.open()
+            //     .then(() => device.selectConfiguration(1))
+            //     .then(() => device.claimInterface(0))
+        }
+
+        function print() {
+            var string = document.getElementById("printContent").value + "\n";
+            var encoder = new TextEncoder();
+            var data = encoder.encode(string);
+            device.transferOut(1, data)
+                .catch(error => {
+                    console.log(error);
+                })
+        }
+
+        function connectAndPrint() {
+            if (device == null) {
+
+                // navigator.usb.requestDevice({filters: [{vendorId: 1046}]})
+                //     .then(selectedDevice => {
+                //         device = selectedDevice;S
+                //         console.log(device);
+                //         return setup(device);
+                //     })
+                //     .then(() => print())
+                //     .catch(error => {
+                //         console.log(error);
+                //     })
+
+                navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true, 
+                    name: "SUP58M2",
+                    optionalServices: [
+                        'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f',
+                        '000018f0-0000-1000-8000-00805f9b34fb'
+                    ]
+                })
+                    .then(selectedDevice => {
+                        device = selectedDevice;
+                        console.log(device);
+                        return setup(device);
+                    })
+                    // .then(() => print())
+                    .catch(error => {
+                        console.log(error);
+                    })
+            } else
+                print();
+        }
+
+        // navigator.usb.getDevices()
+        //     .then(devices => {
+        //         if (devices.length > 0) {
+        //             device = devices[0];
+        //             return setup(device);
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.log(error);
+        //     });
+
+        navigator.bluetooth.getAvailability()
+            .then(res => {
+                if (res) {
+                    console.log('bluetooth is available');
+                } else {
+                    console.warn('bluetooth is not available');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        // navigator.bluetooth.getDevices()
+        //     .then(devices => {
+        //         if (devices.length > 0) {
+        //             device = devices[0];
+        //             return setup(device);
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.log(error);
+        //     });
+
+
+    </script>
+</body>
+</html>
